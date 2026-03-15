@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum NotificationType {
+  like
+  comment
+  follow
+}
+
+model User {
+  id                Int            @id @default(autoincrement())
+  name              String         @db.VarChar(255)
+  username          String         @unique @db.VarChar(50)
+  email             String         @unique @db.VarChar(255)
+  password          String         @db.VarChar(255)
+  bio               String?        @db.Text
+  profilePictureUrl String?        @map("profile_picture_url") @db.VarChar(255)
+  imageCloudinaryId String?        @map("image_cloudinary_id") @db.VarChar(255)
+  gender            Gender?
+  age               Int?           @db.UnsignedTinyInt
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  posts             Post[]
+  stories           Story[]
+  comments          Comment[]
+  postLikes         PostLike[]
+  bookmarks         Bookmark[]
+  followingLinks    Follower[]     @relation("follower")
+  followerLinks     Follower[]     @relation("following")
+  sentNotifications Notification[] @relation("sender")
+  receivedNotifications Notification[] @relation("recipient")
+
+  @@map("users")
+}
+
+model Post {
+  id               Int            @id @default(autoincrement())
+  userId           Int            @map("user_id")
+  imageUrl         String         @map("image_url") @db.Text
+  imageCloudinaryId String?       @map("image_cloudinary_id") @db.VarChar(255)
+  caption          String?        @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments         Comment[]
+  likes            PostLike[]
+  bookmarks        Bookmark[]
+  notifications    Notification[]
+
+  @@map("posts")
+}
+
+model Story {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  imageUrl  String   @map("image_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stories")
+}
+
+model Comment {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  postId      Int      @map("post_id")
+  commentText String   @map("comment_text") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model PostLike {
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@map("post_likes")
+}
+
+model Bookmark {
+  userId    Int      @map("user_id")
+  postId    Int      @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@map("bookmarks")
+}
+
+model Follower {
+  followerId  Int      @map("follower_id")
+  followingId Int      @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("followers")
+}
+
+model Notification {
+  id              Int              @id @default(autoincrement())
+  recipientUserId Int              @map("recipient_user_id")
+  senderUserId    Int              @map("sender_user_id")
+  type            NotificationType
+  postId          Int?             @map("post_id")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(0)
+
+  recipient       User             @relation("recipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  sender          User             @relation("sender", fields: [senderUserId], references: [id], onDelete: Cascade)
+  post            Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
