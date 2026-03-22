@@ -26,6 +26,18 @@ pnpm install
 - Copy `.env.example` into `.env`
 - Update `DATABASE_URL` and other secrets
 
+Required variables:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_ONE_TIME_USD`
+- `STRIPE_PRICE_SUBSCRIPTION_MONTHLY_USD`
+
 3. Push schema to your DB:
 
 ```bash
@@ -44,6 +56,33 @@ pnpm db:seed
 pnpm start-dev
 ```
 
+## Run with Docker Compose
+
+1. Ensure your `.env` file exists (copy from `.env.example` if needed) and set required secrets.
+2. Build and start the stack:
+
+```bash
+docker compose up --build -d
+```
+
+3. Follow app logs:
+
+```bash
+docker compose logs -f app
+```
+
+4. Stop containers:
+
+```bash
+docker compose down
+```
+
+Notes:
+
+- The API is exposed on `http://localhost:3000`.
+- MySQL data is persisted in the `mysql_data` volume.
+- The app waits for MySQL health and runs `prisma db push` on startup.
+
 ## Scripts
 
 - `pnpm start-dev`: Run API with hot reload (tsx)
@@ -61,3 +100,16 @@ pnpm start-dev
 - `/api/profile`
 - `/api/user`
 - `/api/notifications`
+- `/api/payments`
+- `/api/webhooks/stripe`
+
+### Payments Routes
+
+- `POST /api/payments/checkout-session`
+- `GET /api/payments/billing-status`
+- `GET /api/payments/history`
+- `POST /api/payments/subscription/cancel`
+
+### Stripe Webhook Route
+
+- `POST /api/webhooks/stripe`

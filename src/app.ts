@@ -6,11 +6,14 @@ import postRouter from "./routers/postRouter.js";
 import profileRouter from "./routers/profileRouter.js";
 import userRouter from "./routers/userRouter.js";
 import notificationRouter from "./routers/notificationRouter.js";
+import paymentRouter from "./routers/paymentRouter.js";
+import { stripeWebhookHandler } from "./controllers/paymentController.js";
 
 const app = express();
 
 app.disable("x-powered-by");
 app.use(cors());
+app.post("/api/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookHandler);
 app.use(express.json());
 
 app.get("/", (_req: Request, res: Response) => {
@@ -22,6 +25,7 @@ app.use("/api/posts", postRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/user", userRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/payments", paymentRouter);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ message: "Endpoint not found" });
